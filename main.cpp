@@ -2,16 +2,20 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 
+#include <iostream>
+
 #include <gst/gst.h>
 
 int
 main (int argc, char *argv[])
 {
   setenv("GST_TRACERS", "leaks", false);
-  setenv("GST_DEBUG_FILE", "/home/local/GST/traces.txt", false);
-  setenv("GST_DEBUG", "*:2,GST_TRACER:7", false);
+  setenv("GST_DEBUG", "*:2,GST_TRACER:7,videoitem:5", false);
 
   gst_init (&argc, &argv);
+  gchar* version = gst_version_string();
+  std::cerr << version << std::endl;
+  g_free(version);
 
   int exit_status;
   {

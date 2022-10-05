@@ -7,8 +7,13 @@
 
 #include "videoitem.h"
 
+GST_DEBUG_CATEGORY_STATIC(video_item);
+#define GST_CAT_DEFAULT video_item
+
 static void registerMetatypes()
 {
+    GST_DEBUG_CATEGORY_INIT(video_item, "videoitem", 0, "video item category");
+
     qmlRegisterType<VideoItem>("ACME.VideoItem", 1, 0, "VideoItem");
     qRegisterMetaType<VideoItem::State>("VideoItem::State");
 }
@@ -271,6 +276,7 @@ void VideoItem::componentComplete()
 
 void VideoItem::releaseResources()
 {
+    GST_DEBUG(__func__);
     GstElement *sink { nullptr };
     QQuickWindow *win { window() };
 

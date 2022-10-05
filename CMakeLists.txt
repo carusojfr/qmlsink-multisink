@@ -21,9 +21,8 @@ endif ()
 
 # GStreamer
 set(PKG_CONFIG_USE_CMAKE_PREFIX_PATH ON)
-pkg_check_modules(GSTREAMER gstreamer-1.0 REQUIRED)
 pkg_check_modules(GSTREAMER_GL gstreamer-gl-1.0 REQUIRED)
-pkg_check_modules(LOG4CPLUS log4cplus REQUIRED)
+
 
 
 qt5_add_resources(RESOURCES qmlsink-multi.qrc)
