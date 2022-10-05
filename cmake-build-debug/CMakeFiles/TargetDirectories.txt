@@ -1,0 +1,4 @@
+/home/chepseskaf/Documents/gstreamer/subprojects/gst-plugins-good/tests/examples/qt/qmlsink-multisink/cmake-build-debug/CMakeFiles/qmlsink-multisink.dir
+/home/chepseskaf/Documents/gstreamer/subprojects/gst-plugins-good/tests/examples/qt/qmlsink-multisink/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/chepseskaf/Documents/gstreamer/subprojects/gst-plugins-good/tests/examples/qt/qmlsink-multisink/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/chepseskaf/Documents/gstreamer/subprojects/gst-plugins-good/tests/examples/qt/qmlsink-multisink/cmake-build-debug/CMakeFiles/qmlsink-multisink_autogen.dir
