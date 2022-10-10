@@ -25,17 +25,16 @@ main (int argc, char *argv[])
   /* make sure that plugin was loaded */
   GstElement *qmlglsink = gst_element_factory_make ("qmlglsink", NULL);
   g_assert (qmlglsink);
+  gst_object_unref (qmlglsink);
 
   /* anything supported by videotestsrc */
   QStringList patterns (
-      {
-      "smpte", "ball", "spokes", "gamut"});
+      {"smpte"});
 
-  engine.rootContext ()->setContextProperty ("patterns",
-      QVariant::fromValue (patterns));
+  engine.rootContext ()->setContextProperty ("patterns", QVariant::fromValue (patterns));
 
   QObject::connect (&engine, &QQmlEngine::quit, [&] {
-        gst_object_unref (qmlglsink);
+
         qApp->quit ();
       });
 

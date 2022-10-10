@@ -113,11 +113,18 @@ GstBusSyncReply messageHandler(GstBus * /*bus*/, GstMessage *msg, gpointer userD
 
         gst_message_parse_have_context(msg, &context);
 
+        const gchar* context_str = gst_context_get_context_type(context);
+        GST_DEBUG("GstContext %s", context_str);
+
         if (gst_context_has_context_type(context, GST_GL_DISPLAY_CONTEXT_TYPE))
+        {
             gst_element_set_context(priv->pipeline, context);
+        }
 
         if (context)
+        {
             gst_context_unref(context);
+        }
 
         gst_message_unref(msg);
 
@@ -164,12 +171,14 @@ VideoItem::VideoItem(QQuickItem *parent)
 
 VideoItem::~VideoItem()
 {
+    GST_DEBUG(__func__);
     gst_bus_set_sync_handler(_priv->bus, nullptr, nullptr, nullptr); // stop handling messages
 
     gst_element_set_state(_priv->pipeline, GST_STATE_NULL);
+    gst_element_get_state(_priv->pipeline, nullptr, nullptr, _priv->timeout * GST_MSECOND);
 
-    gst_object_unref(_priv->pipeline);
     gst_object_unref(_priv->bus);
+    gst_object_unref(_priv->pipeline);
 }
 
 bool VideoItem::hasVideo() const
@@ -187,6 +196,9 @@ void VideoItem::setSource(const QString &source)
     if (_priv->pattern == source)
         return;
 
+    auto str = QString("%1: %2").arg(__func__, source);
+
+    GST_DEBUG(str.toStdString().c_str());
     _priv->pattern = source;
 
     stop();
@@ -205,6 +217,7 @@ void VideoItem::setSource(const QString &source)
 
 void VideoItem::play()
 {
+    GST_DEBUG(__func__);    
     if (_priv->state > STATE_NULL) {
         const auto status = gst_element_set_state(_priv->pipeline, GST_STATE_PLAYING);
 
@@ -215,6 +228,7 @@ void VideoItem::play()
 
 void VideoItem::stop()
 {
+    GST_DEBUG(__func__);
     if (_priv->state > STATE_NULL) {
         const auto status = gst_element_set_state(_priv->pipeline, GST_STATE_READY);
 
@@ -225,6 +239,7 @@ void VideoItem::stop()
 
 void VideoItem::componentComplete()
 {
+    GST_DEBUG(__func__);
     QQuickItem::componentComplete();
 
     QQuickItem *videoItem = findChild<QQuickItem *>("videoItem");
@@ -264,6 +279,7 @@ void VideoItem::componentComplete()
                 g_object_set(glsink, "widget", videoItem, nullptr);
                 _priv->renderPad = gst_element_get_static_pad(glsink, "sink");
                 g_object_set(_priv->sink, "sink", glsink, nullptr);
+                gst_object_unref(glsink);
                 gst_element_set_state(_priv->pipeline, target);
                 }),
                 QQuickWindow::BeforeSynchronizingStage);
@@ -289,7 +305,24 @@ void VideoItem::releaseResources()
     }
 
     connect(this, &VideoItem::destroyed, this, [sink, win] {
-        auto job = new RenderJob(std::bind(&gst_object_unref, sink));
+        GST_DEBUG("On VideoItem::destroyed");
+        // RenderJob is not executed,
+        gst_object_unref(sink);
+
+        // unref sink avoid leaks:
+        // GST_TRACER :0:: object-alive, type-name=(string)GstQtSink, address=(gpointer)0x561719823930, description=(string)<sink>, ref-count=(uint)1, trace=(string);
+        // (still here) GST_TRACER :0:: object-alive, type-name=(string)GstPad, address=(gpointer)0x5617195a7380, description=(string)<sink:sink>, ref-count=(uint)2, trace=(string);
+        // GST_TRACER :0:: object-alive, type-name=(string)GstGLWrappedContext, address=(gpointer)0x561719588610, description=(string)<glwrappedcontext0>, ref-count=(uint)1, trace=(string);
+        // GST_TRACER :0:: object-alive, type-name=(string)GstGLWindowX11, address=(gpointer)0x561719749340, description=(string)<glwindowx11-1>, ref-count=(uint)1, trace=(string);
+        // GST_TRACER :0:: object-alive, type-name=(string)GstGLDisplayX11, address=(gpointer)0x5617195eb4a0, description=(string)<gldisplayx11-1>, ref-count=(uint)5, trace=(string);
+        // GST_TRACER :0:: object-alive, type-name=(string)GstGLContextGLX, address=(gpointer)0x7f44b800b660, description=(string)<glcontextglx1>, ref-count=(uint)1, trace=(string);
+        // GST_TRACER :0:: object-alive, type-name=(string)GstContext, address=(gpointer)0x7f44b800d700, description=(string)context 'gst.gl.GLDisplay'='context, gst.gl.GLDisplay=(GstGLDisplay)"\(GstGLDisplayX11\)\ gldisplayx11-1";', ref-count=(uint)1, trace=(string);
+        // (still here) GST_TRACER :0:: object-alive, type-name=(string)GstCaps, address=(gpointer)0x7f44b8002c00, description=(string)video/x-raw(memory:GLMemory), format=(string)RGBA, width=(int)320, height=(int)240, framerate=(fraction)30/1, multiview-mode=(string)mono, pixel-aspect-ratio=(fraction)1/1, interlace-mode=(string)progressive, texture-target=(string)2D, ref-count=(uint)2, trace=(string);
+
+        auto job = new RenderJob([sink]{
+            GST_DEBUG("Job: QQuickWindow::AfterSwapStage");
+            gst_object_unref(sink);
+        });
         win->scheduleRenderJob(job, QQuickWindow::AfterSwapStage);
     });
 }
@@ -298,6 +331,7 @@ void VideoItem::updateRect()
 {
     // WARNING: don't touch this
     if (!_priv->renderPad || _priv->state < STATE_PLAYING) {
+        GST_DEBUG("Don't touch this !");
         setRect(QRect(0, 0, 0, 0));
         setResolution(QSize(0, 0));
         return;

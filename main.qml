@@ -6,54 +6,66 @@ import "videoitem"
 ApplicationWindow {
     visible: true
 
-    minimumWidth: videowall.cellWidth * Math.sqrt(videowall.model.length) + videowall.leftMargin
-    minimumHeight: videowall.cellHeight * Math.sqrt(videowall.model.length) + 32
+    minimumWidth: 500
+    minimumHeight: 500
     maximumWidth: minimumWidth
     maximumHeight: minimumHeight
 
-    GridView {
+    Rectangle {
         id: videowall
-        leftMargin: 10
-        model: patterns
         anchors.fill: parent
-        cellWidth: 500
-        cellHeight: 500
-        delegate: Rectangle {
-            border.color: "darkgray"
-            width: videowall.cellWidth - 10
-            height: videowall.cellHeight - 10
-            radius: 3
+        border.color: "darkgray"
+        radius: 3
+        Label {
+            anchors.centerIn: parent
+            text: "No signal"
+        }
+        VideoItem {
+            id: player
+            anchors.fill: parent
+            anchors.margins: 1
+            source: playing.checked ? "smpte" : ""
+        }
+        Row {
+            anchors.margins: 1
+            id: controls
+            height: 32
+            spacing: 10
+            Button {
+                id: quit
+                width: height
+                height: controls.height
+                text: "quit"
+                onClicked: Qt.quit()
+            }
+            Button {
+                id: startstop
+                width: height
+                height: controls.height
+                text: player.hasVideo ? "stop" : "play"
+                onClicked: {
+                    if(player.hasVideo)
+                    {
+                        player.stop()
+                    }
+                    else
+                    {
+                        player.play()
+                    }
+                }
+            }
+            Button {
+                id: playing
+                checkable: true
+                checked: true
+                width: height
+                height: controls.height
+                text: player.hasVideo ? "unset" : "set"
+            }
             Label {
-                anchors.centerIn: parent
-                text: "No signal"
-            }
-            Loader {
-                active: playing.checked
-                anchors.fill: parent
-                anchors.margins: 1
-                sourceComponent: VideoItem {
-                    id: player
-                    source: playing.checked ? modelData : ""
-                }
-            }
-            Row {
-                anchors.margins: 1
-                id: controls
-                height: 32
-                spacing: 10
-                Button {
-                    id: playing
-                    checkable: true
-                    checked: true
-                    width: height
-                    height: controls.height
-                    text: index
-                }
-                Label {
-                    verticalAlignment: Qt.AlignVCenter
-                    height: controls.height
-                    text: modelData
-                }
+                verticalAlignment: Qt.AlignVCenter
+                height: controls.height
+                text: "smpte"
             }
         }
     }
